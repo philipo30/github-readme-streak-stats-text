@@ -31,6 +31,18 @@ require_once "card.php";
 $dotenv = \Dotenv\Dotenv::createImmutable(dirname(__DIR__, 1));
 $dotenv->safeLoad();
 
+// Ensure TOKEN environment variables from the platform are visible in $_SERVER (Vercel puts them in getenv/$_ENV)
+for ($i = 1; $i <= 20; $i++) {
+    $key = $i === 1 ? 'TOKEN' : ("TOKEN" . $i);
+    $val = getenv($key);
+    if ($val === false || $val === '') {
+        $val = $_ENV[$key] ?? null;
+    }
+    if ($val && empty($_SERVER[$key])) {
+        $_SERVER[$key] = $val;
+    }
+}
+
 // if environment variables are not loaded, display error
 if (!isset($_SERVER["TOKEN"])) {
     $message = file_exists(dirname(__DIR__ . "../.env", 1))
