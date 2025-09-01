@@ -1,7 +1,7 @@
 <?php
 
-$THEMES = include "../themes.php";
-$TRANSLATIONS = include "../translations.php";
+$THEMES = include __DIR__ . "/../themes.php";
+$TRANSLATIONS = include __DIR__ . "/../translations.php";
 // Get the keys of the first value in the translations array
 // and filter to only include locales that have an array as the value
 $LOCALES = array_filter(array_keys($TRANSLATIONS), function ($locale) use ($TRANSLATIONS) {
@@ -47,19 +47,19 @@ function camelToSkewer(string $str): string
     </script>
     <title>GitHub Readme Streak Stats Demo</title>
     <link href="https://css-gg-cdn.pages.dev/css" rel="stylesheet">
-    <link rel="stylesheet" href="./css/style.css?v=<?= filemtime("./css/style.css") ?>">
-    <link rel="stylesheet" href="./css/toggle-dark.css?v=<?= filemtime("./css/toggle-dark.css") ?>">
+    <link rel="stylesheet" href="/src/demo/css/style.css?v=<?= filemtime(__DIR__ . "/css/style.css") ?>">
+    <link rel="stylesheet" href="/src/demo/css/toggle-dark.css?v=<?= filemtime(__DIR__ . "/css/toggle-dark.css") ?>">
 
     <!-- Favicons -->
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-    <link rel="mask-icon" href="icon.svg" color="#fb8c00">
+    <link rel="apple-touch-icon" sizes="180x180" href="/src/demo/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/src/demo/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/src/demo/favicon-32x32.png">
+    <link rel="mask-icon" href="/src/demo/icon.svg" color="#fb8c00">
 
-    <script type="text/javascript" src="./js/script.js?v=<?= filemtime("./js/script.js") ?>" defer></script>
-    <script type="text/javascript" src="./js/accordion.js?v=<?= filemtime("./js/accordion.js") ?>" defer></script>
-    <script type="text/javascript" src="./js/toggle-dark.js?v=<?= filemtime("./js/toggle-dark.js") ?>" defer></script>
-    <script type="text/javascript" src="./js/jscolor.min.js?v=<?= filemtime("./js/jscolor.min.js") ?>" defer></script>
+    <script type="text/javascript" src="/src/demo/js/script.js?v=<?= filemtime(__DIR__ . "/js/script.js") ?>" defer></script>
+    <script type="text/javascript" src="/src/demo/js/accordion.js?v=<?= filemtime(__DIR__ . "/js/accordion.js") ?>" defer></script>
+    <script type="text/javascript" src="/src/demo/js/toggle-dark.js?v=<?= filemtime(__DIR__ . "/js/toggle-dark.js") ?>" defer></script>
+    <script type="text/javascript" src="/src/demo/js/jscolor.min.js?v=<?= filemtime(__DIR__ . "/js/jscolor.min.js") ?>" defer></script>
     <script async defer src="https://buttons.github.io/buttons.js"></script>
 </head>
 
@@ -225,7 +225,7 @@ function camelToSkewer(string $str): string
         <div class="output top-bottom-split">
             <div class="top">
                 <h2>Preview</h2>
-                <img alt="GitHub Readme Streak Stats" src="preview.php?user=" />
+                <img alt="GitHub Readme Streak Stats" src="/demo/preview.php?user=" />
                 <div class="json" style="display: none;">
                     <pre></pre>
                 </div>
