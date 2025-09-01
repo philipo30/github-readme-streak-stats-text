@@ -2,8 +2,28 @@
 
 declare(strict_types=1);
 
+// load Composer autoload with resilient paths for Vercel function packaging
+$autoloadCandidates = [
+    dirname(__DIR__) . "/vendor/autoload.php",        // project root vendor (local/dev)
+    dirname(__DIR__) . "/api/vendor/autoload.php",    // Vercel installs vendor next to api entry sometimes
+    __DIR__ . "/../vendor/autoload.php",              // fallback equivalent to root vendor
+    __DIR__ . "/../../vendor/autoload.php",           // safety: two levels up
+];
+$autoloadLoaded = false;
+foreach ($autoloadCandidates as $autoload) {
+    if (file_exists($autoload)) {
+        require_once $autoload;
+        $autoloadLoaded = true;
+        break;
+    }
+}
+if (!$autoloadLoaded) {
+    http_response_code(500);
+    header("Content-Type: text/plain");
+    exit("Composer autoload not found. Ensure Composer dependencies are installed.");
+}
+
 // load functions
-require_once "../vendor/autoload.php";
 require_once "stats.php";
 require_once "card.php";
 
