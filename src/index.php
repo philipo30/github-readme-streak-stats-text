@@ -59,7 +59,7 @@ header("Cache-Control: public, max-age=$cacheMinutes");
 
 // redirect to demo site if user is not given
 if (!isset($_REQUEST["user"])) {
-    header("Location: demo/");
+    header("Location: /demo", true, 302);
     exit();
 }
 

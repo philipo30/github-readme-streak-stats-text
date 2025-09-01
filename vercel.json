@@ -3,8 +3,10 @@
     "api/**/*.php": { "runtime": "vercel-php@0.7.1" }
   },
   "routes": [
-    { "src": "^/demo/preview.php$", "dest": "/api/demo/preview.php" },
-    { "src": "^/demo$", "dest": "/api/demo/index.php" },
+    { "src": "^/src/demo/(.*)$", "dest": "/src/demo/$1" },
+    { "src": "^/demo/preview\\.php$", "dest": "/api/demo/preview.php" },
+    { "src": "^/demo/?$", "dest": "/api/demo/index.php" },
+    { "src": "^/$", "dest": "/api/index.php" },
     { "src": "^/(.*)$", "dest": "/api/index.php" }
   ]
 }
