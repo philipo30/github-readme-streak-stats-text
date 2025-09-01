@@ -759,6 +759,174 @@ function convertHexColors(string $svg): string
 }
 
 /**
+ * Draw a unicode progress bar using filled and empty blocks
+ *
+ * @param float $value The current value
+ * @param float $max The maximum value for scaling
+ * @param int $width The total width of the bar in characters
+ * @return string The rendered bar (e.g., ███░░░)
+ */
+function drawCliBar(float $value, float $max, int $width = 28): string
+{
+    $max = $max > 0 ? $max : 1;
+    $filled = (int) round(($value / $max) * $width);
+    $filled = max(0, min($width, $filled));
+    return str_repeat("█", $filled) . str_repeat("░", $width - $filled);
+}
+
+/**
+ * Generate a CLI-style text card for the streak stats
+ *
+ * @param array<string,mixed> $stats Streak stats
+ * @param array<string,string>|NULL $params Request parameters
+ * @return string The generated text-based card (optionally fenced with ```)
+ */
+function generateCliCard(array $stats, array $params = null): string
+{
+    $params = $params ?? $_REQUEST;
+
+    // get requested locale and formatting helpers
+    $localeCode = $params["locale"] ?? "en";
+    $dateFormat = $params["date_format"] ?? (getTranslations($localeCode)["date_format"] ?? null);
+
+    $useShortNumbers = ($params["short_numbers"] ?? "") === "true";
+
+    $user = $params["user"] ?? "user";
+    $mode = $stats["mode"] === "weekly" ? "Weekly" : "Daily";
+    $unit = $stats["mode"] === "weekly" ? "wks" : "days";
+
+    // Optional flags
+    $styleCompact = ($params["style"] ?? "") === "compact" || ($params["compact"] ?? "") === "true";
+    $colorize = ($params["color"] ?? "") === "true" || ($params["ansi"] ?? "") === "true";
+
+    // ANSI helpers
+    $ansi = function (string $s, string $code) use ($colorize): string {
+        if (!$colorize) return $s;
+        return "\033[" . $code . "m" . $s . "\033[0m";
+    };
+    $bold = fn(string $s): string => "\033[1m{$s}\033[0m";
+    if (!$colorize) {
+        $bold = fn(string $s): string => $s;
+    }
+
+    // Safely format dates only if present
+    $formatIf = function (?string $date) use ($dateFormat, $localeCode): string {
+        if (!$date) return "-";
+        return formatDate($date, $dateFormat, $localeCode);
+    };
+
+    // Numbers and dates formatted
+    $totalContributions = formatNumber((float) $stats["totalContributions"], $localeCode, $useShortNumbers);
+    $firstContribution = $stats["firstContribution"] ? formatDate($stats["firstContribution"], $dateFormat, $localeCode) : "-";
+
+    $currLen = (float) ($stats["currentStreak"]["length"] ?? 0);
+    $currStart = $formatIf($stats["currentStreak"]["start"] ?? null);
+    $currEnd = $formatIf($stats["currentStreak"]["end"] ?? null);
+
+    $longLen = (float) ($stats["longestStreak"]["length"] ?? 0);
+    $longStart = $formatIf($stats["longestStreak"]["start"] ?? null);
+    $longEnd = $formatIf($stats["longestStreak"]["end"] ?? null);
+
+    if ($styleCompact) {
+        // one-liner summary
+        $currSeg = $ansi("Curr " . (int)$currLen . ($unit === "wks" ? "w" : "d"), "32"); // green
+        $longSeg = $ansi("Long " . (int)$longLen . ($unit === "wks" ? "w" : "d"), "33"); // yellow
+        $totalSeg = $ansi("Total " . $totalContributions, "36"); // cyan
+        $rangeSeg = $ansi("Since " . $firstContribution, "2"); // dim
+        $modeSeg = $ansi(($mode === "Weekly" ? "Weekly" : "Daily"), "35"); // magenta
+        $title = $bold("GitHub Streak :: {$user}");
+        $body = $title . " • " . $modeSeg . " • " . $currSeg . " [{$currStart}–{$currEnd}] | " . $longSeg . " [{$longStart}–{$longEnd}] | " . $totalSeg . " | " . $rangeSeg;
+        $wrap = ($params["fenced"] ?? "true") === "true";
+        if ($wrap) {
+            $body = "```text\n" . $body . "\n```";
+        }
+        return $body;
+    }
+
+    // Bars: scale streak bars by the longest streak so they are comparable
+    $barWidth = intval($params["bar_width"] ?? 28);
+    $currBarRaw = drawCliBar($currLen, max(1.0, $longLen), $barWidth);
+    $longBarRaw = drawCliBar($longLen, max(1.0, $longLen), $barWidth);
+
+    $currBar = $ansi($currBarRaw, "32"); // green
+    $longBar = $ansi($longBarRaw, "33"); // yellow
+
+    // Excluded days label, if any
+    $excludedDaysLabel = "";
+    if (!empty($stats["excludedDays"])) {
+        $excludedDays = implode(", ", translateDays($stats["excludedDays"], $localeCode));
+        $excludedDaysLabel = "\n" . $ansi("Excluded", "2") . str_repeat(" ", 6) . $excludedDays; // dim label
+    }
+
+    // Title and aligned sections
+    $title = $bold("GitHub Streak Stats :: {$user} [{$mode}]");
+
+    // Pad helper (monospace feel)
+    $padLeft = function (string $s, int $len): string { return str_pad($s, $len, " ", STR_PAD_LEFT); };
+    $padRight = function (string $s, int $len): string { return str_pad($s, $len, " ", STR_PAD_RIGHT); };
+
+    $labelWidth = 13; // enough to align labels
+    $lines = [];
+    $lines[] = $title;
+    $lines[] = str_repeat("-", max(strlen(strip_tags($title)), $labelWidth + 1 + $barWidth + 10));
+
+    // Labels with mild color
+    $lblCurrent = $ansi("Current", "36"); // cyan
+    $lblLongest = $ansi("Longest", "36"); // cyan
+    $lblTotal = $ansi("Total", "36"); // cyan
+    $lblRange = $ansi("Range", "36"); // cyan
+
+    // Current Streak
+    $lines[] = $padRight($lblCurrent, $labelWidth) . "  " . $padLeft((string) (int)$currLen, 4) . " {$unit}   [{$currStart} - {$currEnd}]";
+    $lines[] = $padRight("", $labelWidth) . "  " . $currBar . "  " . $padLeft($currLen . "/" . ($longLen ?: 1), 9);
+
+    // Longest Streak
+    $lines[] = $padRight($lblLongest, $labelWidth) . "  " . $padLeft((string) (int)$longLen, 4) . " {$unit}   [{$longStart} - {$longEnd}]";
+    $lines[] = $padRight("", $labelWidth) . "  " . $longBar . "  " . $padLeft($longLen . "/" . ($longLen ?: 1), 9);
+
+    // Totals and range
+    $lines[] = ""; // spacer
+    $lines[] = $padRight($lblTotal, $labelWidth) . "  " . $padLeft($ansi($totalContributions, "1"), 8);
+    $lines[] = $padRight($lblRange, $labelWidth) . "  " . $firstContribution . " - Present";
+
+    if ($excludedDaysLabel) {
+        $lines[] = $excludedDaysLabel;
+    }
+
+    $body = implode("\n", $lines);
+
+    // Wrap in fenced code block unless explicitly disabled
+    $wrap = ($params["fenced"] ?? "true") === "true";
+    if ($wrap) {
+        $body = "```text\n" . $body . "\n```";
+    }
+
+    return $body;
+}
+
+/**
+ * Generate a CLI-style error output
+ *
+ * @param string $message The error message to display
+ * @param array<string,string>|NULL $params Request parameters
+ * @return string The generated text-based error card
+ */
+function generateCliErrorCard(string $message, array $params = null): string
+{
+    $params = $params ?? $_REQUEST;
+    $colorize = ($params["color"] ?? "") === "true" || ($params["ansi"] ?? "") === "true";
+    $err = "Error: " . $message;
+    if ($colorize) {
+        $err = "\033[31m" . $err . "\033[0m"; // red
+    }
+    $wrap = ($params["fenced"] ?? "true") === "true";
+    if ($wrap) {
+        $err = "```text\n" . $err . "\n```";
+    }
+    return $err;
+}
+
+/**
  * Converts an SVG card to a PNG image
  *
  * @param string $svg The SVG for the card as a string
@@ -846,6 +1014,15 @@ function generateOutput(string|array $output, array $params = null): array
                 "body" => generateErrorCard($e->getMessage(), $params),
             ];
         }
+    }
+
+    // output CLI text card
+    if ($requestedType === "cli" || $requestedType === "text") {
+        $text = gettype($output) === "string" ? generateCliErrorCard((string) $output, $params) : generateCliCard($output, $params);
+        return [
+            "contentType" => "text/plain",
+            "body" => $text,
+        ];
     }
 
     // remove animations if disable_animations is set
