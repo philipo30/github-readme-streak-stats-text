@@ -40,8 +40,6 @@ if ($mode == "weekly") {
     unset($demoStats["excludedDays"]);
 }
 
-// set content type to SVG image
-header("Content-Type: image/svg+xml");
 
 try {
     renderOutput($demoStats);

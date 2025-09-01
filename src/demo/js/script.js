@@ -42,7 +42,33 @@ const preview = {
     const imageURL = `${window.location.origin}?${query}`;
     const demoImageURL = `preview.php?${query}`;
     // update preview
-    if (params.type !== "json") {
+    if (params.type === "json") {
+      fetch(demoImageURL)
+        .then((response) => response.json())
+        .then((data) => (document.querySelector(".output .json pre").innerText = JSON.stringify(data, null, 2)))
+        .catch(console.error);
+      document.querySelector(".json code").innerText = imageURL;
+      document.querySelector(".copy-md").parentElement.style.display = "none";
+      document.querySelector(".copy-html").parentElement.style.display = "none";
+      document.querySelector(".copy-cli").parentElement.style.display = "none";
+      document.querySelector(".output img").style.display = "none";
+      document.querySelector(".output .cli").style.display = "none";
+      document.querySelector(".output .json").style.display = "block";
+      document.querySelector(".copy-json").parentElement.style.display = "block";
+    } else if (params.type === "cli" || params.type === "text") {
+      fetch(demoImageURL)
+        .then((response) => response.text())
+        .then((data) => (document.querySelector(".output .cli pre").innerText = data))
+        .catch(console.error);
+      document.querySelector(".cli code").innerText = imageURL;
+      document.querySelector(".copy-md").parentElement.style.display = "none";
+      document.querySelector(".copy-html").parentElement.style.display = "none";
+      document.querySelector(".copy-json").parentElement.style.display = "none";
+      document.querySelector(".output img").style.display = "none";
+      document.querySelector(".output .json").style.display = "none";
+      document.querySelector(".output .cli").style.display = "block";
+      document.querySelector(".copy-cli").parentElement.style.display = "block";
+    } else {
       const repoLink = "https://git.io/streak-stats";
       const md = `[![GitHub Streak](${imageURL})](${repoLink})`;
       const html = `<a href="${repoLink}"><img src="${imageURL}" alt="GitHub Streak" /></a>`;
@@ -53,18 +79,9 @@ const preview = {
       document.querySelector(".copy-html").parentElement.style.display = "block";
       document.querySelector(".output img").style.display = "block";
       document.querySelector(".output .json").style.display = "none";
+      document.querySelector(".output .cli").style.display = "none";
       document.querySelector(".copy-json").parentElement.style.display = "none";
-    } else {
-      fetch(demoImageURL)
-        .then((response) => response.json())
-        .then((data) => (document.querySelector(".output .json pre").innerText = JSON.stringify(data, null, 2)))
-        .catch(console.error);
-      document.querySelector(".json code").innerText = imageURL;
-      document.querySelector(".copy-md").parentElement.style.display = "none";
-      document.querySelector(".copy-html").parentElement.style.display = "none";
-      document.querySelector(".output img").style.display = "none";
-      document.querySelector(".output .json").style.display = "block";
-      document.querySelector(".copy-json").parentElement.style.display = "block";
+      document.querySelector(".copy-cli").parentElement.style.display = "none";
     }
     // disable copy button if username is invalid
     const copyButtons = document.querySelectorAll(".copy-button");
@@ -398,6 +415,8 @@ const clipboard = {
       input.value = document.querySelector(".html code").innerText;
     } else if (el.classList.contains("copy-json")) {
       input.value = document.querySelector(".json code").innerText;
+    } else if (el.classList.contains("copy-cli")) {
+      input.value = document.querySelector(".cli code").innerText;
     }
     document.body.appendChild(input);
     // select all

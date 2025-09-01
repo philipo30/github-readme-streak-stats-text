@@ -184,6 +184,7 @@ function camelToSkewer(string $str): string
                     <option value="svg">SVG</option>
                     <option value="png">PNG</option>
                     <option value="json">JSON</option>
+                    <option value="cli">CLI/Text</option>
                 </select>
 
                 <details class="advanced">
@@ -229,6 +230,9 @@ function camelToSkewer(string $str): string
                 <div class="json" style="display: none;">
                     <pre></pre>
                 </div>
+                <div class="cli" style="display: none;">
+                    <pre></pre>
+                </div>
                 <p class="warning">
                     Note: The stats above are just examples and not from your GitHub profile.
                 </p>
@@ -262,6 +266,17 @@ function camelToSkewer(string $str): string
                     </div>
                     
                     <button class="copy-button btn tooltip copy-json" onclick="clipboard.copy(this);" onmouseout="tooltip.reset(this);" disabled>
+                        Copy To Clipboard
+                    </button>
+                </div>
+
+                <div>
+                    <h2>CLI/Text</h2>
+                    <div class="code-container cli">
+                        <code></code>
+                    </div>
+                    
+                    <button class="copy-button btn tooltip copy-cli" onclick="clipboard.copy(this);" onmouseout="tooltip.reset(this);" disabled>
                         Copy To Clipboard
                     </button>
                 </div>

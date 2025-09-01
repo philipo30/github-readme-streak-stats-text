@@ -297,7 +297,8 @@ input:focus:invalid {
 }
 
 .output .code-container,
-.output .json {
+.output .json,
+.output .cli {
   background: var(--border);
   border-radius: 6px;
   padding: 12px 16px;
